@@ -1,0 +1,8 @@
+pom.xml
+*jar
+/lib/
+/classes/
+.lein-deps-sum
+/cljs_staging
+/checkouts
+/checkouts_cljs
