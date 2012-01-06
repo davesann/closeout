@@ -109,27 +109,34 @@
            (fn [evt]
              (let [data-path (ui-su/get-primary-data-path @ui-state rendered-node-id)
                    idx (last data-path)]
-               (us/update-in! app-state (vec (butlast data-path)) #(vec (concat (take idx %) (drop (inc idx) %))))
-               )))
+               (us/remove-by-index-in! app-state (vec (butlast data-path)) #{idx}))))
          (u/log "Warning" "destroy")
          )
 
-       (if-let [todo-text (udfind/first-by-class "todo-text" node)]
+       (uctrl/if-let [todo-text  (udfind/first-by-class "todo-text" node)
+                      todo-input (udfind/first-by-class "todo-input" node)]
          (gevents/listen 
            todo-text et/DBLCLICK
-           (fn [evt] (gcls/add node "editing")))
+           (fn [evt] 
+             (gcls/add node "editing")
+             (. todo-input (focus))
+             ))
          (u/log "Warning" "text")
          )
 
        (if-let [todo-input (udfind/first-by-class "todo-input" node)]
-         (gevents/listen 
-           todo-input et/KEYPRESS
-           (fn [evt]
-             (when (= (.keyCode evt) 13)
-               (let [data-path (ui-su/get-primary-data-path @ui-state rendered-node-id)]
-                 (gcls/remove node "editing")
-                 (us/assoc-in! app-state (conj data-path :desc) (.value todo-input))
-                 ))))
+         (do
+           (gevents/listen todo-input et/KEYPRESS
+                           (fn [evt] (when (= (.keyCode evt) 13)
+                                       (. todo-input (blur)))))
+           (gevents/listen todo-input et/BLUR
+                           (fn [_evt]
+                             (let [data-path (ui-su/get-primary-data-path @ui-state rendered-node-id)
+                                   p (conj data-path :desc)
+                                   v (.value todo-input)]
+                               (gcls/remove node "editing")
+                               (us/assoc-in?! app-state p v)))          
+                           ))
          (u/log "Warning" "input")
          )
        ))

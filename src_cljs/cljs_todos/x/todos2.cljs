@@ -23,7 +23,7 @@
     (u/log-str "initialise ui")  
     (doseq [[component-class data-path update-fn] initial-components]
       (when-let [dom-node (udfind/first-by-class-inclusive component-class ui-root)]
-        (update-fn application dom-node data-path @app-state)))))
+        (update-fn application dom-node data-path nil @app-state)))))
 
 (defn init [ui-root initial-app-state]
   (do 

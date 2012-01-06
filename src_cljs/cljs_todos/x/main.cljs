@@ -9,12 +9,12 @@
    ))
 
 
-(todos/init)
+;(todos/init)
 
 (def todos-fixtures
-  (vec (for [i (range 5)]
+  (vec (for [i (range 500)]
          {:desc (str "do something: " i)
-          :done? true
+          :done? false
           ;:due-date nil
           })))
 
