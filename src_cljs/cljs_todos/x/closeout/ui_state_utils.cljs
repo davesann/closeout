@@ -1,4 +1,4 @@
-(ns cljs-todos.x.ui-state-utils
+(ns cljs-todos.x.closeout.ui-state-utils
   (:require 
     [dsann.utils.x.core :as u]
     [dsann.utils.map :as umap]
@@ -7,15 +7,6 @@
     [dsann.utils.state :as us]
     )
   )
-
-
-(def initial-ui-state
-  {:updaters 
-   {:paths {}
-    :ui-element-paths {} 
-    }
-   ; use for recycling? :ui-elements - maybe clone nodes
-   })
 
 ;; move to specific
 (defn ui-element-id [e]
@@ -32,6 +23,8 @@
 (defn get-update-fn [updaters element-id]
   (get-in updaters [:ui-element-paths element-id :update-fn!]))
 
+
+;; generic
 (defn remove-update-paths [updaters ui-element]
   (let [id (ui-element-id ui-element)]
     (if-let [element-paths (get-in updaters [:ui-element-paths id])]
@@ -45,7 +38,6 @@
                                  (umap/dissoc-in [:data-paths :ANY   p id]))]
               (recur paths new-updaters)))))
       updaters)))
-
 
 (defn add-data-paths [updaters lookup-type [p & paths] element-id v]
   (if (nil? p)
@@ -80,8 +72,6 @@
         ]
     (update-data-paths updaters ui-element ui-element lookup-type new-paths update-fn!)))
     
-
-
 ;; call whenever a ui-element is updated
 ;; old-ui-element is the previous element if the element was replaced
 ;; ui-element is the dependent element
@@ -113,18 +103,17 @@
         (recur (rest a-seq) (rest sub-seq))
         false))))
           
-
 (defn get-ANY-update-fns [ui-state data-path]
   (let [any-path-map (get-in ui-state [:updaters :data-paths :ANY])]
     (useq/mapcat- nil?
-               (fn [[p v]]
-                 (if (seq-starts-with p data-path)
+                  (fn [[p v]]
+                    (if (seq-starts-with data-path p)
                    (vals v)))
-               any-path-map)))
+                  any-path-map)))
 
 (defn get-EXACT-update-fns [ui-state data-path]
   (let [element-map (get-in ui-state [:updaters :data-paths :EXACT data-path])]
-    (vals (u/log-str "EXEACT" element-map))))
+    (vals element-map)))
 
 (defn get-update-fns [ui-state data-path]
   (concat 
@@ -137,17 +126,20 @@
 (defn get-primary-data-path [ui-state ui-element-id]
   (get-in ui-state [:updaters :ui-element-paths ui-element-id :primary-data-path]))
 
-
 ; maps data paths to ui update-fnuctions
 (defn update-ui! [application old-app-state new-app-state]
   (let [ui-state @(:ui-state application)
         data-path (:update-path (meta new-app-state))]
     (u/log-str "update-ui meta" (meta new-app-state))
-    ;(u/log-str "updaters" (:updaters ui-state))
+   ;(u/log-str "updaters" (:updaters ui-state))
+    ;(u/log-str new-app-state)
     ;(u/log-str "num update-fns" (count (get-update-fns ui-state data-path)))
     (if-let [update-fns (get-update-fns ui-state data-path)]
-      (doseq [{:keys [update-fn! primary-data-path]} (u/log-str update-fns)] 
-        (update-fn! primary-data-path old-app-state new-app-state))
+      (do
+        (u/log-str "Update-fns:" (count update-fns))
+        (doseq [{:keys [update-fn! primary-data-path]} update-fns] 
+          (update-fn! primary-data-path old-app-state new-app-state))
+        (u/log-str "Done Ui Update"))
       (u/log-str "No update-functions for updated path: " data-path))))
 
 

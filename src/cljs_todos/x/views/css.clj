@@ -66,6 +66,15 @@
 
 (def todos-rules
  (list
+   [:.history-list
+    :display "inline-block"
+    :vertical-align "top"
+    :border "1px solid blue"
+    :padding "1em"
+    :width "40%"]
+   
+   
+   
    [:body
     :background  "#eeeeee"
     :color       "#333333"

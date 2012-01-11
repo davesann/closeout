@@ -16,8 +16,8 @@
      (hph/include-css "/css/reset.css")
      (hph/include-css "/css/g-todos.css")
      ]
-    [:body 
-     [:div#todo-app templates/todo-app]]
+    [:body [:div#fred "hello"]
+     [:div#app.placeholder {:data-template-name "main"}]]
     (hph/include-js "/cljs/bootstrap.js")
     ))
 
