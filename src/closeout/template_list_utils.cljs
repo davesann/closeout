@@ -1,18 +1,20 @@
-(ns cljs-todos.x.closeout.template-list-utils
+(ns closeout.template-list-utils
   (:require 
     [dsann.utils.x.core :as u]
-    [dsann.utils.state :as us]
+    [dsann.utils.state.update :as us]
+    [dsann.utils.state.mirror :as usm]
+    [dsann.utils.state.list-morph :as lm]
     
-    [dsann.cljs-utils.x.js :as ujs]
-    [dsann.cljs-utils.x.dom.find   :as udfind]
+    [dsann.cljs-utils.js       :as ujs]
+    [dsann.cljs-utils.dom.find :as udfind]
     
-    [pinot.html :as ph]
+    [piccup.html :as ph]
     
     [goog.dom :as gdom]
     
-    [cljs-todos.x.closeout.ui-state-utils :as co-su]
-    [cljs-todos.x.closeout.behaviour-utils :as co-bu]
-    [cljs-todos.x.closeout.template-utils :as co-tu]
+    
+    [closeout.behaviour-utils :as co-bu]
+    [closeout.template-utils  :as co-tu]
     ))
 
 
@@ -56,7 +58,7 @@
                     (cond
                       (= :remove action)
                       (do 
-                        (u/log-str "removed child" idx)
+                       ; (u/log-str "removed child" idx)
                         (gdom/removeNode child)
                         (co-bu/deactivate! application child))
                       
@@ -64,8 +66,8 @@
                       (data-path-changed! (:ui-state application) child data-path idx)
                       )))
               ]
-          ;(doseq [u update-list] (f u))
-          (ujs/doseq-with-yield update-list f 50 10)
+          (doseq [u update-list] (f u))
+          ;(ujs/doseq-with-yield update-list f 50 10)
           )))))
 
 
@@ -89,7 +91,6 @@
                 (do
                   ;; this takes a loooong time for large lists
                   (data-path-changed! (:ui-state application) c data-path current-index)
-                  ;;(co-su/data-path-changed! (:ui-state application) c (conj data-path (u/log-str "NEW-index" current-index)))
                   (recur (inc child-index) (inc current-index) rc)))))
           )
         ;(u/log-str "NEW ui-state" @(:ui-state application))
@@ -121,14 +122,14 @@
     ;; either way, this could be very slow for large sets
     (doseq [t (udfind/by-class-inclusive "template" n)]
       (let [id (ui-element-id t)
-            primary-data-path (co-su/get-primary-data-path @ui-state id)
+            primary-data-path (usm/get-primary-data-path @ui-state id)
             primary-data-path-tail (drop new-data-path-len primary-data-path)
             
             new-primary-data-path (if (seq primary-data-path-tail)
                                     (apply (partial conj new-data-path) primary-data-path-tail)
                                     new-data-path) 
             ]
-        (co-su/data-path-changed! ui-state t new-primary-data-path)))
+        (usm/data-path-changed! ui-state t new-primary-data-path)))
     n))
                 
 
@@ -138,7 +139,7 @@
   (let [current-nodes (ujs/array->coll (gdom/getChildren container-element))
         new-list (get-in new-app-state data-path)
         old-list (get-in old-app-state data-path)
-        {:keys [new-list-changes old-list-deletes]} (us/map-moves old-list new-list)
+        {:keys [new-list-changes old-list-deletes]} (lm/find-list-morph old-list new-list)
         current-nodes-vec (vec current-nodes)]
     
     ;; deletes
@@ -181,10 +182,10 @@
   (let [current-nodes (ujs/array->coll (gdom/getChildren container-element))
         new-list (get-in new-app-state data-path)
         old-list (get-in old-app-state data-path)
-        {:keys [new-list-changes old-list-deletes]} (time (us/map-moves old-list new-list))
+        {:keys [new-list-changes old-list-deletes]} (lm/find-list-morph old-list new-list)
         current-nodes-vec (vec current-nodes)]
-    (u/log-str "Changes" new-list-changes)
-    (u/log-str "deletes" old-list-deletes)
+   ; (u/log-str "Changes" new-list-changes)
+   ; (u/log-str "deletes" old-list-deletes)
    ; (u/log-str application)
     
     ;; deletes
@@ -232,7 +233,7 @@
 (defn list-update! [template-name application container-element data-path old-app-state new-app-state]
   (let [m (meta new-app-state)
         action (:action m) ]
-    (u/log-str "List update" m)
+    ; (u/log-str "List update" m)
     (cond
       (= action :list-remove)
       (let [removed-indices (:removed-indices (meta new-app-state))] 
@@ -254,7 +255,7 @@
         new-update-fn  (partial update-ui-list-element! template-name updated-node application)
         ]
     
-    (co-su/updated-ui-element! 
+    (usm/updated-ui-element! 
       (:ui-state application) ui-element updated-node :EXACT data-path nil new-update-fn)
     (when (not= ui-element updated-node)
       (co-bu/deactivate! application ui-element)

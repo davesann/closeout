@@ -1,19 +1,21 @@
-(ns cljs-todos.x.closeout.template-maplist-utils
+(ns closeout.template-maplist-utils
   (:require 
     [dsann.utils.x.core :as u]
-    [dsann.utils.state :as us]
     [dsann.utils.seq :as useq]
+    [dsann.utils.state.update :as us]
+    [dsann.utils.state.mirror :as usm]
+    [dsann.utils.state.list-morph :as lm]
     
-    [dsann.cljs-utils.x.js :as ujs]
-    [dsann.cljs-utils.x.dom.find   :as udfind]
+    [dsann.cljs-utils.js       :as ujs]
+    [dsann.cljs-utils.dom.find :as udfind]
     
-    [pinot.html :as ph]
+    [piccup.html :as ph]
     
     [goog.dom :as gdom]
     
-    [cljs-todos.x.closeout.ui-state-utils :as co-su]
-    [cljs-todos.x.closeout.behaviour-utils :as co-bu]
-    [cljs-todos.x.closeout.template-utils :as co-tu]
+
+    [closeout.behaviour-utils :as co-bu]
+    [closeout.template-utils  :as co-tu]
     ))
 
 
@@ -36,7 +38,7 @@
 (defn maplist-update-remove! [template-name application data-path container-element old-app-state new-app-state]
  (let [new-map (get-in new-app-state data-path)
        old-map (get-in old-app-state data-path)
-       deleted-keys (time (indexed-deleted-keys old-map new-map))
+       deleted-keys (indexed-deleted-keys old-map new-map)
        current-nodes-vec (vec (ujs/array->coll (gdom/getChildren container-element)))
        ]
    (u/log-str "maplist-update-remove!" deleted-keys)
@@ -48,7 +50,7 @@
 
 (defn maplist-update-generic! [template-name application data-path container-element old-app-state new-app-state]
   (let [current-nodes (ujs/array->coll (gdom/getChildren container-element))
-        m (u/log-str "META" (meta new-app-state))
+        m (meta new-app-state)
         
         new-map (get-in new-app-state data-path)
         old-map (get-in old-app-state data-path)
@@ -57,7 +59,7 @@
         
         new-list (seq new-map)  ; convert map to seqs
         old-list (seq old-map)
-        {:keys [new-list-changes old-list-deletes]} (time (us/map-moves old-list new-list))
+        {:keys [new-list-changes old-list-deletes]} (lm/find-list-morph old-list new-list)
         current-nodes-vec (vec current-nodes)
         ]
     ;(u/log-str "old-list" new-list)
@@ -133,8 +135,8 @@
         new-update-fn  (partial update-ui-maplist-element! template-name updated-node application)
         ]
     
-    (co-su/updated-ui-element! 
-      (:ui-state application) ui-element updated-node :ANY (u/log-str "DPPP is " data-path) nil new-update-fn)
+    (usm/updated-ui-element! 
+      (:ui-state application) ui-element updated-node :ANY data-path nil new-update-fn)
     (when (not= ui-element updated-node)
       (co-bu/deactivate! application ui-element)
       (gdom/replaceNode  updated-node ui-element)
@@ -143,7 +145,7 @@
 
 (defn make-init-maplist [template-name]
    (fn [ui-element application data-path app-state]
-    (update-ui-maplist-element! template-name ui-element application (u/log-str "DP is" data-path) nil app-state)))
+    (update-ui-maplist-element! template-name ui-element application data-path nil app-state)))
 
 
 

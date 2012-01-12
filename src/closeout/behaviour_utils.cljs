@@ -1,14 +1,13 @@
-(ns cljs-todos.x.closeout.behaviour-utils
+(ns closeout.behaviour-utils
   (:require 
     [dsann.utils.x.core :as u]
     [dsann.utils.seq :as useq]
+    [dsann.utils.state.mirror :as usm]
     
-    [dsann.cljs-utils.x.dom.dom    :as udom]
-    [dsann.cljs-utils.x.dom.find   :as udfind]
-    [dsann.cljs-utils.x.dom.data   :as udd]
-    
-    [cljs-todos.x.closeout.ui-state-utils :as co-su]
-    
+    [dsann.cljs-utils.dom.dom    :as udom]
+    [dsann.cljs-utils.dom.find   :as udfind]
+    [dsann.cljs-utils.dom.data   :as udd]
+
     [goog.dom.dataset :as gdata]
     [goog.events :as gevents]
     )
@@ -29,13 +28,11 @@
         (gdata/set ui-element "behaviourActive" "true")))))
 
 (defn deactivate-node! [ui-state n]
-  (gevents/removeAll n)                     ; remove events
+  (gevents/removeAll n)                   ; remove events
   (gdata/remove n "behaviourActive")
-  (co-su/remove-update-paths! ui-state n)   ; remove updates                 
+  (usm/remove-update-paths! ui-state n)   ; remove updates                 
   )
 
-
-; TODO: rendered-node and correct data-path??
 
 (defn activate! [application nodes context]
   (doseq [n (useq/ensure-sequential nodes)
