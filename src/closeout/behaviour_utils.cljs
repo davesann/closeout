@@ -7,6 +7,8 @@
     [dsann.cljs-utils.dom.dom    :as udom]
     [dsann.cljs-utils.dom.find   :as udfind]
     [dsann.cljs-utils.dom.data   :as udd]
+    
+    [closeout.protocols.template-binding :as ptb]
 
     [goog.dom.dataset :as gdata]
     [goog.events :as gevents]
@@ -16,12 +18,8 @@
     )
   )
 
-
-(defn get-template-name [ui-element]
-  (keyword (gdata/get ui-element "templateName"))) 
-
 (defn apply-behaviour! [application ui-element]
-  (if-let [t-name (get-template-name ui-element)]
+  (if-let [t-name (ptb/name ui-element)]
     (let [templates  (:ui-templates application)]
       (when-let [behaviour! (:behaviour-fn! (templates t-name))]
         (behaviour! application ui-element)

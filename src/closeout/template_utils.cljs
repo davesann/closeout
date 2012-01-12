@@ -15,6 +15,7 @@
     [piccup.html :as ph]
 
     [closeout.behaviour-utils :as co-bu]
+    [closeout.protocols.template-binding :as ptb]
   ))
 
 (defn ensure-activation! [application old-node new-node]
@@ -68,7 +69,7 @@
 
 
 (defn render-node [application placeholder-element]
-  (let [t-name    (get-template-name placeholder-element)
+  (let [t-name    (ptb/name placeholder-element)
         templates (:ui-templates application)]
     (if-let [render    (:render-fn (templates t-name))]
       (render t-name)
@@ -81,24 +82,10 @@
     (if init!
       (init! ui-element application data-path app-state))))
 
-(defn get-template-name [ui-element]
-  (keyword (gdata/get ui-element "templateName"))) 
-
-(defn get-bound-path [ui-element data-path]
-  (if-let [t-bind (gdata/get ui-element "templateBindKw")]
-    (conj data-path (keyword t-bind))
-    (if-let [t-bind (gdata/get ui-element "templateBindInt")]
-      (conj data-path (js/parseInt t-bind 10))
-      (if-let [t-bind (gdata/get ui-element "templateBindStr")]
-        (conj data-path t-bind)
-        (if-let [t-bind (gdata/get ui-element "templateBindSeq")]
-          (apply (partial conj data-path) (reader/read t-bind))
-          data-path)))))
-
 ;; call for newly created elements
 (defn initialise-update-loop! [application ui-element data-path app-state]
-  (let [t-name          (get-template-name ui-element)
-        bound-data-path (get-bound-path ui-element data-path)
+  (let [t-name          (ptb/name ui-element)
+        bound-data-path (ptb/bound-path ui-element data-path)
         ui-element  (if-not (gcls/has ui-element "placeholder")
                       ui-element
                       (let [new-node  (render-node application ui-element)]
