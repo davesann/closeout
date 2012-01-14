@@ -1,8 +1,11 @@
-(ns closeout.protocols.template-binding)
+(ns closeout.protocols.template-binding
+  (:refer-clojure :exclude [name])
+  )
 
 (defprotocol TemplateBinding
-  (id    [this] "return an identifier")
-  (binds [this parent-data-path] 
-         "returns the subpath that this template binds, based on the
-          parent-data-path") 
+  (name  [this]       "get the name")
+  (name! [this value] "set the name")
+  (bound-path     [this parent-data-path] 
+                  "returns the subpath that this template binds, based on the
+                    parent-data-path") 
   )

@@ -14,7 +14,7 @@
     [goog.dom :as gdom]
     
 
-    [closeout.behaviour-utils :as co-bu]
+    [closeout.protocols.behaviour :as cpb]
     [closeout.template-utils  :as co-tu]
     ))
 
@@ -25,7 +25,7 @@
                                               :data-template-bind-kw  k}]))
         ]
     (gdom/appendChild li lc)
-    (co-tu/initialise-update-loop! application lc data-path app-state)
+    (co-tu/initialise-node-update! lc application data-path app-state)
     li))
 
 
@@ -45,7 +45,7 @@
    (doseq [[idx k] deleted-keys]
      (let [n (current-nodes-vec idx)]
        (gdom/removeNode n)
-       (co-bu/deactivate! application n)))))
+       (cpb/deactivate! n application)))))
      
 
 (defn maplist-update-generic! [template-name application data-path container-element old-app-state new-app-state]
@@ -72,7 +72,7 @@
     (doseq [i old-list-deletes]
       (let [n (current-nodes-vec i)]
         (gdom/removeNode n)
-        (co-bu/deactivate! application n)))
+        (cpb/deactivate! n application)))
     
     ;; inserts and moves
     (let [updates (drop-while #(= :unchanged (first (second %))) 
@@ -135,12 +135,12 @@
         new-update-fn  (partial update-ui-maplist-element! template-name updated-node application)
         ]
     
-    (usm/updated-ui-element! 
+    (usm/update-on-data-change!
       (:ui-state application) ui-element updated-node :ANY data-path nil new-update-fn)
     (when (not= ui-element updated-node)
-      (co-bu/deactivate! application ui-element)
+      (cpb/deactivate! ui-element application)
       (gdom/replaceNode  updated-node ui-element)
-      (co-bu/activate!   application updated-node nil))
+      (cpb/activate!   updated-node application))
     updated-node))
 
 (defn make-init-maplist [template-name]

@@ -12,15 +12,9 @@
     
     [goog.dom :as gdom]
     
-    
-    [closeout.behaviour-utils :as co-bu]
+    [closeout.protocols.behaviour :as cpb]
     [closeout.template-utils  :as co-tu]
     ))
-
-
-(defn replace-ui-element! [application old-e new-e]
-  (gdom/replaceNode new-e old-e)
-  (co-bu/deactivate! application old-e))
 
 (defn make-li! [application data-path app-state template-name idx]  
   (let [li (first (ph/html [:li]))
@@ -28,7 +22,7 @@
                                               :data-template-bind-int idx}]))
         ]
     (gdom/appendChild li lc)
-    (co-tu/initialise-update-loop! application lc data-path app-state)
+    (co-tu/initialise-node-update! lc application data-path app-state)
     li))
 
 
@@ -57,10 +51,7 @@
                   (let [[action child idx] u]
                     (cond
                       (= :remove action)
-                      (do 
-                       ; (u/log-str "removed child" idx)
-                        (gdom/removeNode child)
-                        (co-bu/deactivate! application child))
+                      (cpb/deactivate! child application)
                       
                       (= :path-change action)
                       (data-path-changed! (:ui-state application) child data-path idx)
@@ -85,8 +76,7 @@
               ;(u/log-str child-index)
               (if (removed-indices child-index)
                 (do
-                  (gdom/removeNode c)
-                  (co-bu/deactivate! application c)
+                  (cpb/deactivate! c application)
                   (recur (inc child-index) current-index rc)) 
                 (do
                   ;; this takes a loooong time for large lists
@@ -102,10 +92,7 @@
 
 (defn list-update-append! [template-name application data-path container-element new-app-state appended-count]
   (let [current-index (.length (gdom/getChildren container-element))]
-    ;(u/log-str "list-update-append" [current-index appended-count])
-    
     (doseq [idx (range current-index (+ current-index appended-count))]
-      ;(u/log-str idx)
       (let [n (make-li! application data-path new-app-state template-name idx)]
         (gdom/appendChild container-element n)))))
 
@@ -145,8 +132,7 @@
     ;; deletes
     (doseq [i old-list-deletes]
       (let [n (current-nodes-vec i)]
-        (gdom/removeNode n)
-        (co-bu/deactivate! application n)))
+        (cpb/deactivate! n application)))
     
     ;; inserts and moves
     (let [updates (drop-while #(= :unchanged (first (second %))) 
@@ -157,7 +143,7 @@
               (cond 
                 (= action :insert)
                 (let [n (make-li! application data-path new-app-state template-name idx)]
-                  ;(co-bu/activate! application n)
+                  ;(cpb/activate! n application)
                   n)
                 
                 (= action :move)
@@ -179,20 +165,20 @@
             ))))))
 
 (defn list-update-generic! [template-name application data-path container-element old-app-state new-app-state]
-  (let [current-nodes (ujs/array->coll (gdom/getChildren container-element))
-        new-list (get-in new-app-state data-path)
+  (let [new-list (get-in new-app-state data-path)
         old-list (get-in old-app-state data-path)
+        current-nodes (ujs/array->coll (gdom/getChildren container-element))
+        current-nodes-vec (vec current-nodes)
         {:keys [new-list-changes old-list-deletes]} (lm/find-list-morph old-list new-list)
-        current-nodes-vec (vec current-nodes)]
-   ; (u/log-str "Changes" new-list-changes)
-   ; (u/log-str "deletes" old-list-deletes)
-   ; (u/log-str application)
+        ]
+    ; (u/log-str "Changes" new-list-changes)
+    ; (u/log-str "deletes" old-list-deletes)
+    ; (u/log-str application)
     
     ;; deletes
     (doseq [i old-list-deletes]
       (let [n (current-nodes-vec i)]
-        (gdom/removeNode n)
-        (co-bu/deactivate! application n)))
+        (cpb/deactivate! n application)))
     
     ;; inserts and moves
     (let [updates (drop-while #(= :unchanged (first (second %))) 
@@ -204,7 +190,7 @@
                     (cond 
                       (= action :insert)
                       (let [n (make-li! application data-path new-app-state template-name idx)]
-                        ;(co-bu/activate! application n)
+                        ;(cpb/activate! n application)
                         n)
                       
                       (= action :move)
@@ -217,9 +203,9 @@
                       
                       ;:else EXCEPTION?
                       )]
-     ;           (u/log old-node)
-    ;            (u/log new-node)
-     ;           (u/log-str ">>>>>>")
+                ;           (u/log old-node)
+                ;            (u/log new-node)
+                ;           (u/log-str ">>>>>>")
                 (cond
                   (not old-node)
                   (gdom/appendChild container-element new-node)
@@ -228,7 +214,7 @@
                   (gdom/insertChildAt container-element new-node idx)
                   )))]
       (ujs/doseq-with-yield updates f 50 20))))
-        
+
 
 (defn list-update! [template-name application container-element data-path old-app-state new-app-state]
   (let [m (meta new-app-state)
@@ -255,17 +241,10 @@
         new-update-fn  (partial update-ui-list-element! template-name updated-node application)
         ]
     
-    (usm/updated-ui-element! 
+    (usm/update-on-data-change!
       (:ui-state application) ui-element updated-node :EXACT data-path nil new-update-fn)
-    (when (not= ui-element updated-node)
-      (co-bu/deactivate! application ui-element)
-      (gdom/replaceNode  updated-node ui-element)
-      (co-bu/activate!   application updated-node nil))
+    (cpb/updated! ui-element updated-node application)
     updated-node))
-
-(defn make-init-list [template-name]
-   (fn [ui-element application data-path app-state]
-    (update-ui-list-element! template-name ui-element application data-path nil app-state)))
 
 
 
