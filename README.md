@@ -1,17 +1,17 @@
-# cljs-todos
+# Closeout - a state binding library
 
-A website written in noir. 
+## Demo Site
+
+http://closeout-demo.herokuapp.com/
 
 ## Usage
 
-```bash
-lein deps
-lein run
-```
+Documentation pending
+
 
 ## License
 
-Copyright (C) 2011 FIXME
+Copyright (C) 2012 Dave Sann
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
