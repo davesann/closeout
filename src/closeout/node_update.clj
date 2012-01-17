@@ -2,10 +2,11 @@
   (:require 
     [dsann.utils.x.core :as u]
     
-    [dsann.utils.state.read-notifier :as rn]
-    [dsann.utils.state.mirror :as usm]
-    
-    [closeout.protocols.behaviour :as cpb]
+    [closeout.state.read-notifier :as rn]
+    [closeout.state.mirror :as usm]
+    [closeout.render.list :as rl]
+
+    [closeout.protocols.template-binding :as tb]
   ))
 
 ;; this is fully generic
@@ -36,11 +37,22 @@
                             application)]
     ;; register for update on data change
     (usm/update-on-data-change! 
-      (:ui-state application) old-node new-node update-type 
+      (:mirror-state application) old-node new-node update-type 
       data-path sub-paths update-fn!)
     ;; notify for behaviour activation
-    (cpb/updated! old-node new-node application)
-    updated-node))
+    (tb/updated! old-node new-node application)
+    new-node))
+
+
+;; 
+(defn list-update! 
+  [template-name old-node application data-path old-app-state new-app-state]
+  (let [new-node   (rl/list-update! template-name application  old-node data-path old-app-state new-app-state)
+        update-fn! (partial list-update! template-name new-node application)]
+    (usm/update-on-data-change!
+      (:mirror-state application) old-node new-node :EXACT data-path nil update-fn!)
+    (tb/updated! old-node new-node application)
+    new-node))
 
 
 ;; :ANY   - registers to be called if the data path or any sub path of it changes 
@@ -63,7 +75,6 @@
     application 
     data-path old-app-state new-app-state))
     
-
 ;; records subpaths read by the node-update-fn! and registers these for update
 (defn start-node-update-for-identified-sub-paths! 
   [node-update-fn! old-node application data-path old-app-state new-app-state]
@@ -75,10 +86,10 @@
             new-update-fn  (partial start-node-update-for-identified-sub-paths! 
                                     node-update-fn! new-node application)]
         (usm/update-on-data-change! 
-          (:ui-state application) old-node new-node :EXACT 
+          (:mirror-state application) old-node new-node :EXACT 
           data-path sub-paths new-update-fn)
-        (cpb/updated! ui-element updated-node application)
-        updated-node))))
+        (tb/updated! old-node new-node application)
+        new-node))))
 
 
       
