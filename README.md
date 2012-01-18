@@ -4,9 +4,21 @@
 
 http://closeout-demo.herokuapp.com/
 
+
 ## Usage
 
-Good documentation pending.
+To use in you clojurescript projects you just have to include the dependency in 
+your project.clj
+
+* clojars [closeout "0.1.0"]
+
+use your preferred method for cljs compilation - provided it picks up jars 
+in your project lib.
+
+
+## Documentation 
+
+Good documentation is pending.
 
 For now please see the demo application code.
 In particular - the applications themselves are defined in the templates 
