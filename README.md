@@ -6,7 +6,13 @@ http://closeout-demo.herokuapp.com/
 
 ## Usage
 
-Documentation pending
+Good documentation pending.
+
+For now please see the demo application code.
+In particular - the applications themselves are defined in the templates 
+files.
+
+https://github.com/davesann/closeout-demo-cljs
 
 
 ## License

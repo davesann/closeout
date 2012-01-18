@@ -12,3 +12,4 @@ pom.xml
 /.project
 /.classpath
 /.settings
+/src-generated
