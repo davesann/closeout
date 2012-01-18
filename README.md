@@ -26,6 +26,13 @@ files.
 
 https://github.com/davesann/closeout-demo-cljs
 
+## if you want to build and hack this
+
+You will need https://github.com/davesann/cljs-watch to work with the generic code.
+
+This is necessary so that I can produce generic code and 
+still jar the files for distribution 
+
 
 ## License
 
